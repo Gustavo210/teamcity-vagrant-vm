@@ -1,0 +1,16 @@
+FROM jetbrains/teamcity-agent
+
+ARG AGENT_NAME
+ARG SERVER_URL
+ENV SERVER_URL=$SERVER_URL
+ENV AGENT_NAME=$AGENT_NAME
+
+USER root
+RUN apt update && apt install -y jq
+
+RUN mkdir -p /opt/buildagent/work \
+    /opt/buildagent/temp \
+    /opt/buildagent/tools \
+    /opt/buildagent/plugins \
+    /opt/buildagent/system && \
+    chown -R buildagent:buildagent /opt/buildagent

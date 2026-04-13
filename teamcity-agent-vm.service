@@ -1,0 +1,16 @@
+[Unit]
+Description=TeamCity Agent VM (Vagrant/VirtualBox)
+After=network.target vboxdrv.service
+Requires=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/gustavo210/projects/teamcity-arch-vm
+ExecStart=/usr/bin/vagrant up
+ExecStop=/usr/bin/vagrant halt
+User=gustavo210
+Group=gustavo210
+
+[Install]
+WantedBy=multi-user.target
