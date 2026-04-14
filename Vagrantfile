@@ -12,20 +12,22 @@ if File.exist?(env_file)
   end
 end
 
-AGENT_NAME  = ENV.fetch("AGENT_NAME",  "arch-teamcity-agent")
+AGENT_NAME  = ENV.fetch("AGENT_NAME",  "ubuntu-teamcity-agent")
 SERVER_URL  = ENV.fetch("SERVER_URL",  "http://LOCAL_COMPANY_SERVER_IP_ADDRESS:8111")
 # ───────────────────────────────────────────────────────────────────
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "generic/arch"
+  config.vm.box = "generic/ubuntu2204"
   config.vm.hostname = "teamcity-agent"
 
   # Network — the agent needs to reach the TeamCity server
-  config.vm.network "private_network", type: "dhcp"
+  config.vm.network "private_network", type: "dhcp",
+    libvirt__network_name: "default",
+    virtualbox__intnet: "vnet"
 
   # ── VirtualBox provider ──────────────────────────────────────────
   config.vm.provider "virtualbox" do |vb|
-    vb.name   = "teamcity-agent-arch"
+    vb.name   = "teamcity-agent-ubuntu"
     vb.cpus   = 2
     vb.memory = 4096
 
@@ -58,17 +60,12 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # ── Provisioning ─────────────────────────────────────────────────
-  # Step 1: Update system and kernel
-  config.vm.provision "base", type: "shell",
-    path: "provision-base.sh",
-    reboot: true
-
-  # Step 2: Copy Dockerfile into the VM
+  # Step 1: Copy Dockerfile into the VM
   config.vm.provision "copy-dockerfile", type: "file",
     source: "Dockerfile.agent",
     destination: "/tmp/Dockerfile.agent"
 
-  # Step 3: Install Docker and run agent (after reboot with new kernel)
+  # Step 2: Install Docker, build and run the TeamCity agent
   config.vm.provision "docker-agent", type: "shell",
     path: "provision.sh",
     env: {

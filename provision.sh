@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Installing Docker and dependencies..."
-pacman -S --noconfirm docker iptables
+export DEBIAN_FRONTEND=noninteractive
 
-echo "==> Loading kernel modules..."
-modprobe br_netfilter
-modprobe overlay
+echo "==> Switching to archive.ubuntu.com mirror (box default is flaky)..."
+sed -i 's|mirrors.edge.kernel.org/ubuntu|archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list
 
-echo "==> Enabling and starting Docker..."
-systemctl enable docker
-systemctl start docker
-systemctl status docker --no-pager
+echo "==> Installing Docker..."
+apt-get update
+apt-get install -y docker.io
 
-echo "==> Adding vagrant user to docker group..."
+echo "==> Enabling Docker and adding vagrant to docker group..."
+systemctl enable --now docker
 usermod -aG docker vagrant
 
 echo "==> Building TeamCity agent image..."
