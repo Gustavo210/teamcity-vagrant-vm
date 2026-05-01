@@ -44,18 +44,17 @@ Vagrant.configure("2") do |config|
     config.disksize.size = "150GB"
   end
 
+
   # ── Libvirt provider ─────────────────────────────────────────────
   config.vm.provider "libvirt" do |lv|
     lv.cpus   = 2
     lv.memory = 4096
-
     # Primary storage volume — 150 GB
     lv.machine_virtual_size = 150
 
     # Auto-start VM when host boots
     lv.autostart = true
   end
-
   # Disable default synced folder (not always available on libvirt)
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
