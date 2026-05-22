@@ -1,7 +1,3 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
-# ── Load .env file ─────────────────────────────────────────────────
 env_file = File.join(File.dirname(__FILE__), ".env")
 if File.exist?(env_file)
   File.readlines(env_file).each do |line|
@@ -14,54 +10,40 @@ end
 
 AGENT_NAME  = ENV.fetch("AGENT_NAME",  "ubuntu-teamcity-agent")
 SERVER_URL  = ENV.fetch("SERVER_URL",  "http://LOCAL_COMPANY_SERVER_IP_ADDRESS:8111")
-# ───────────────────────────────────────────────────────────────────
 
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/ubuntu2204"
   config.vm.hostname = "teamcity-agent"
 
-  # Network — using default NAT provided by libvirt/virtualbox
-
-  # ── VirtualBox provider ──────────────────────────────────────────
   config.vm.provider "virtualbox" do |vb|
     vb.name   = "teamcity-agent-ubuntu"
     vb.cpus   = 2
     vb.memory = 4096
 
-    # Resize the primary disk to 150 GB
-    # Requires: vagrant plugin install vagrant-disksize
     unless Vagrant.has_plugin?("vagrant-disksize")
       warn "NOTE: Install vagrant-disksize for 150 GB disk on VirtualBox:"
       warn "  vagrant plugin install vagrant-disksize"
     end
   end
 
-  # vagrant-disksize (VirtualBox only)
   if Vagrant.has_plugin?("vagrant-disksize")
     config.disksize.size = "150GB"
   end
 
-
-  # ── Libvirt provider ─────────────────────────────────────────────
   config.vm.provider "libvirt" do |lv|
     lv.cpus   = 2
     lv.memory = 4096
-    # Primary storage volume — 150 GB
     lv.machine_virtual_size = 150
 
-    # Auto-start VM when host boots
     lv.autostart = true
   end
-  # Disable default synced folder (not always available on libvirt)
+
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-  # ── Provisioning ─────────────────────────────────────────────────
-  # Step 1: Copy Dockerfile into the VM
   config.vm.provision "copy-dockerfile", type: "file",
     source: "Dockerfile.agent",
     destination: "/tmp/Dockerfile.agent"
 
-  # Step 2: Install Docker, build and run the TeamCity agent
   config.vm.provision "docker-agent", type: "shell",
     path: "provision.sh",
     env: {
