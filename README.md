@@ -1,15 +1,15 @@
-# TeamCity Agent - Arch Linux VM
+# TeamCity Agent - Ubuntu VM
 
-VM Arch Linux que roda um agente TeamCity via Docker, com suporte para **libvirt** e **VirtualBox**.
+VM Ubuntu 22.04 que roda um agente TeamCity via Docker, com suporte para **libvirt** e **VirtualBox**.
 
 ## Recursos da VM
 
-| Recurso | Valor |
-|---|---|
-| Sistema Operacional | Arch Linux (`generic/arch`) |
-| CPUs | 2 |
-| RAM | 4 GB |
-| Disco | 150 GB |
+| Recurso             | Valor                               |
+| ------------------- | ----------------------------------- |
+| Sistema Operacional | Ubuntu 22.04 (`generic/ubuntu2204`) |
+| CPUs                | 2                                   |
+| RAM                 | 4 GB                                |
+| Disco               | 150 GB                              |
 
 ## Pré-requisitos
 
@@ -32,30 +32,26 @@ AGENT_NAME=meu-agente
 SERVER_URL=http://IP_DO_SERVIDOR:8111
 ```
 
-| Variável | Descrição | Default |
-|---|---|---|
-| `AGENT_NAME` | Nome do agente no TeamCity | `arch-teamcity-agent` |
-| `SERVER_URL` | URL do servidor TeamCity | `http://LOCAL_COMPANY_SERVER_IP_ADDRESS:8111` |
+| Variável     | Descrição                  | Default                                       |
+| ------------ | -------------------------- | --------------------------------------------- |
+| `AGENT_NAME` | Nome do agente no TeamCity | `ubuntu-teamcity-agent`                       |
+| `SERVER_URL` | URL do servidor TeamCity   | `http://LOCAL_COMPANY_SERVER_IP_ADDRESS:8111` |
 
 ## Uso
 
 ### Subir a VM
 
 ```bash
-# Com libvirt
-vagrant up --provider=libvirt
-
-# Com VirtualBox
-vagrant up --provider=virtualbox
+vagrant up
 ```
 
 O provisionamento executa automaticamente:
 
-1. Atualiza o keyring e o sistema (incluindo kernel)
-2. Reinicia a VM com o kernel atualizado
-3. Instala Docker
+1. Corrige o mirror de pacotes Ubuntu (usa `archive.ubuntu.com`)
+2. Instala Docker
+3. Habilita o daemon Docker e adiciona vagrant ao grupo docker
 4. Builda a imagem do agente TeamCity
-5. Sobe o container do agente
+5. Inicia o container do agente com volumes para work, temp, tools, plugins e system
 
 ### Acessar a VM
 
@@ -110,8 +106,7 @@ sudo systemctl enable teamcity-agent-vm.service
 .
 ├── .env.example              # Exemplo de variáveis de ambiente
 ├── Dockerfile.agent          # Imagem Docker do agente TeamCity
-├── provision-base.sh         # Atualização do sistema e kernel
 ├── provision.sh              # Instalação do Docker e deploy do agente
 ├── teamcity-agent-vm.service # Serviço systemd para auto-start (VirtualBox)
-└── Vagrantfile               # Definição da VM
+└── Vagrantfile               # Definição da VM (Ubuntu 22.04)
 ```
