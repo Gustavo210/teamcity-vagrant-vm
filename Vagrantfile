@@ -20,10 +20,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "generic/ubuntu2204"
   config.vm.hostname = "teamcity-agent"
 
-  # Network — the agent needs to reach the TeamCity server
-  config.vm.network "private_network", type: "dhcp",
-    libvirt__network_name: "default",
-    virtualbox__intnet: "vnet"
+  # Network — using default NAT provided by libvirt/virtualbox
 
   # ── VirtualBox provider ──────────────────────────────────────────
   config.vm.provider "virtualbox" do |vb|
