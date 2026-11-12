@@ -34,18 +34,21 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provider "libvirt" do |lv|
-    lv.cpus   = 2
-    lv.memory = 4096
+    lv.cpus   = 4
+    lv.memory = 6144
     lv.machine_virtual_size = 150
 
-    # Pin both vCPUs (and the QEMU emulator thread) to one physical core of the
-    # host (threads 7 and 15 are hyperthreading siblings), so the VM always gets
-    # the same core and does not compete with host processes for scheduling.
+    # Pin the 4 vCPUs (and the QEMU emulator thread) to two whole physical cores
+    # of the host: cores 6 and 7, whose hyperthreading siblings are threads
+    # 6,14 and 7,15. The VM always gets the same cores and does not compete
+    # with host processes for scheduling.
     # Only applied when the domain is created; for an existing VM run:
-    #   virsh vcpupin teamcity-arch-vm_default 0 7 --live --config
-    #   virsh vcpupin teamcity-arch-vm_default 1 15 --live --config
-    #   virsh emulatorpin teamcity-arch-vm_default 7,15 --live --config
-    lv.cpuset   = "7,15"
+    #   virsh vcpupin teamcity-arch-vm_default 0 6  --live --config
+    #   virsh vcpupin teamcity-arch-vm_default 1 14 --live --config
+    #   virsh vcpupin teamcity-arch-vm_default 2 7  --live --config
+    #   virsh vcpupin teamcity-arch-vm_default 3 15 --live --config
+    #   virsh emulatorpin teamcity-arch-vm_default 6,7,14,15 --live --config
+    lv.cpuset   = "6,7,14,15"
     lv.cpu_mode = "host-passthrough"
 
     lv.autostart = true

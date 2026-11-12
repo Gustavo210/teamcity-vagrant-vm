@@ -7,8 +7,8 @@ VM Ubuntu 22.04 que roda um agente TeamCity via Docker, com suporte para **libvi
 | Recurso             | Valor                               |
 | ------------------- | ----------------------------------- |
 | Sistema Operacional | Ubuntu 22.04 (`generic/ubuntu2204`) |
-| CPUs                | 2 (fixadas nos threads 7 e 15 do host, libvirt) |
-| RAM                 | 4 GB                                |
+| CPUs                | 4 (fixadas nos threads 6, 7, 14 e 15 do host, libvirt) |
+| RAM                 | 6 GB                                |
 | Disco               | 150 GB                              |
 | Agente              | `jetbrains/teamcity-agent:2025.07.1` (mesma versão do servidor) |
 | Fuso horário        | America/Sao_Paulo (VM e container)  |
@@ -133,11 +133,23 @@ virsh -c qemu:///system snapshot-delete teamcity-arch-vm_default pre-manutencao 
 
 ### CPU dedicada (libvirt)
 
-A VM não ganha mais núcleos, mas os dois vCPUs ficam fixos nos threads 7 e 15 do host (irmãos de
-hyperthreading de um mesmo núcleo físico) via `lv.cpuset`, com `cpu_mode = host-passthrough`.
-Isso vale na criação do domínio; para uma VM já existente, rode os comandos `virsh vcpupin`
-comentados no `Vagrantfile`. Para o host nunca escalonar nada nesses threads, seria preciso
-`isolcpus=7,15` na linha de comando do kernel do host, o que não está feito.
+Os 4 vCPUs ficam fixos nos threads 6, 7, 14 e 15 do host (dois núcleos físicos inteiros, com
+seus pares de hyperthreading) via `lv.cpuset`, com `cpu_mode = host-passthrough`. Isso vale na
+criação do domínio; para uma VM já existente, rode os comandos `virsh vcpupin` comentados no
+`Vagrantfile`. Para o host nunca escalonar nada nesses threads, seria preciso
+`isolcpus=6,7,14,15` na linha de comando do kernel do host, o que não está feito.
+
+Mudar `lv.cpus` ou `lv.memory` de uma VM existente: o vagrant-libvirt 0.12.2 falha ao aplicar
+memória com o domínio desligado e deixa a VM parada. Nesse caso, grave os valores direto no
+domínio e depois suba:
+
+```bash
+virsh -c qemu:///system setmaxmem teamcity-arch-vm_default 6291456 --config
+virsh -c qemu:///system setmem    teamcity-arch-vm_default 6291456 --config
+virsh -c qemu:///system setvcpus  teamcity-arch-vm_default 4 --maximum --config
+virsh -c qemu:///system setvcpus  teamcity-arch-vm_default 4 --config
+vagrant up
+```
 
 ### Parar a VM
 
