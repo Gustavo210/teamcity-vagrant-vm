@@ -10,6 +10,9 @@ end
 
 AGENT_NAME  = ENV.fetch("AGENT_NAME",  "ubuntu-teamcity-agent")
 SERVER_URL  = ENV.fetch("SERVER_URL",  "http://LOCAL_COMPANY_SERVER_IP_ADDRESS:8111")
+TELEGRAM_BOT_TOKEN = ENV.fetch("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID   = ENV.fetch("TELEGRAM_CHAT_ID", "")
+DISK_ALERT_PERCENT = ENV.fetch("DISK_ALERT_PERCENT", "85")
 
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/ubuntu2204"
@@ -35,6 +38,16 @@ Vagrant.configure("2") do |config|
     lv.memory = 4096
     lv.machine_virtual_size = 150
 
+    # Pin both vCPUs (and the QEMU emulator thread) to one physical core of the
+    # host (threads 7 and 15 are hyperthreading siblings), so the VM always gets
+    # the same core and does not compete with host processes for scheduling.
+    # Only applied when the domain is created; for an existing VM run:
+    #   virsh vcpupin teamcity-arch-vm_default 0 7 --live --config
+    #   virsh vcpupin teamcity-arch-vm_default 1 15 --live --config
+    #   virsh emulatorpin teamcity-arch-vm_default 7,15 --live --config
+    lv.cpuset   = "7,15"
+    lv.cpu_mode = "host-passthrough"
+
     lv.autostart = true
   end
 
@@ -44,10 +57,17 @@ Vagrant.configure("2") do |config|
     source: "Dockerfile.agent",
     destination: "/tmp/Dockerfile.agent"
 
+  config.vm.provision "copy-alert-script", type: "file",
+    source: "scripts/agent-alert.sh",
+    destination: "/tmp/agent-alert.sh"
+
   config.vm.provision "docker-agent", type: "shell",
     path: "provision.sh",
     env: {
-      "AGENT_NAME" => AGENT_NAME,
-      "SERVER_URL" => SERVER_URL,
+      "AGENT_NAME"         => AGENT_NAME,
+      "SERVER_URL"         => SERVER_URL,
+      "TELEGRAM_BOT_TOKEN" => TELEGRAM_BOT_TOKEN,
+      "TELEGRAM_CHAT_ID"   => TELEGRAM_CHAT_ID,
+      "DISK_ALERT_PERCENT" => DISK_ALERT_PERCENT,
     }
 end

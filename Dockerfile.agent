@@ -1,4 +1,9 @@
-FROM jetbrains/teamcity-agent
+# Pin to the server version (http://SERVER/app/rest/server/version). With a
+# floating tag the agent tries to self-upgrade from the server on every start,
+# fails, and restarts once before becoming available.
+FROM jetbrains/teamcity-agent:2025.07.1
+
+ENV TZ=America/Sao_Paulo
 
 ARG AGENT_NAME
 ARG SERVER_URL
@@ -6,11 +11,13 @@ ENV SERVER_URL=$SERVER_URL
 ENV AGENT_NAME=$AGENT_NAME
 
 USER root
-RUN apt update && apt install -y jq
+RUN apt update && apt install -y jq tzdata
 
 RUN mkdir -p /opt/buildagent/work \
     /opt/buildagent/temp \
     /opt/buildagent/tools \
     /opt/buildagent/plugins \
-    /opt/buildagent/system && \
-    chown -R buildagent:buildagent /opt/buildagent
+    /opt/buildagent/system \
+    /opt/buildagent/logs \
+    /data/teamcity_agent/conf && \
+    chown -R buildagent:buildagent /opt/buildagent /data/teamcity_agent
