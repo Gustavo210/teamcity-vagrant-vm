@@ -3,6 +3,10 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+echo "==> Disabling DNSSEC in systemd-resolved (box default breaks DNS)..."
+sed -i 's/^DNSSEC=.*/DNSSEC=no/' /etc/systemd/resolved.conf
+systemctl restart systemd-resolved
+
 echo "==> Switching to archive.ubuntu.com mirror (box default is flaky)..."
 sed -i 's|mirrors.edge.kernel.org/ubuntu|archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list
 
